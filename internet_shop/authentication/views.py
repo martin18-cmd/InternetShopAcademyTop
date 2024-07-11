@@ -7,7 +7,7 @@ import jwt
 import hashlib
 
 from base.responses import SuccessPutResponse, BadPutResponse, SuccessGetResponse, \
-    BadGetResponse
+    BadGetResponse, SuccesDeleteResponse, BadDeleteResponse
 from .serializers import RegisterSerializer, LoginSerializer, UsersSerializer, \
     UsersPasswordUpdateSerializer
 from .models import Users
@@ -15,6 +15,7 @@ from database import session_maker
 from authentication.dependencies import role_required
 from base.BaseViewSet import BaseViewSet
 from .UsersDAO import UsersDAO
+from ..base.responses import SuccessDeleteResponse
 
 
 class RegisterView(APIView):
@@ -28,7 +29,7 @@ class RegisterView(APIView):
                 {"status": "success", "msg": "Регистрация прошла успешно"},
                 status=status.HTTP_201_CREATED,
             )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST,)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST, )
 
 
 class LoginView(APIView):
@@ -88,15 +89,29 @@ class UsersView(APIView):
 
     @role_required(5)
     def get(self, request, *args, **kwargs):
-        pk = kwargs.get('id')
-        if pk is None:
-            users = UsersDAO.find_all(Users)
-            serializer = self.serializer_class(users, many=True)
-            return SuccessGetResponse(data=serializer.data)
-        else:
-            result = UsersDAO.find_by_id(Users, pk)
-            if result is None:
-                return BadGetResponse(data=[])
-            serializer = self.serializer_class(result[0])
-            return SuccessGetResponse(data=serializer.data)
+        users = UsersDAO.find_all(Users)
+        serializer = self.serializer_class(users, many=True)
+        return SuccessGetResponse(data=serializer.data)
 
+
+class UsersViewWithParam():
+    serializer_class = UsersSerializer
+
+    @role_required(5)
+    def get(self, request, *args, **kwargs):
+        pk = kwargs.get('id')
+        result = UsersDAO.find_by_id(Users, pk)
+        result = UsersDAO.find_by_id(Users, pk)
+        if result is None:
+            return BadGetResponse(data=[])
+        serializer = self.serializer_class(result[0])
+        return SuccessGetResponse(data=serializer.data)
+
+    @role_required(5)
+    def delete(self, request, *args, **kwargs):
+        pk = kwargs.get('id')
+        user = UsersDAO.find_by_id(Users, pk)
+        if not user:
+            return BadDeleteResponse()
+        UsersDAO.delete(Users, pk)
+        return SuccessDeleteResponse()

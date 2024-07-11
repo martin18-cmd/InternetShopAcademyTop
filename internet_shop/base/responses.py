@@ -95,7 +95,7 @@ class SuccessDeleteResponse(ApiResponse):
             status_code: status = status.HTTP_200_OK,
             **kwargs
     ):
-        super().__init__(data, status_code, **kwargs)
+        super().__init__(data={"message": 'Пользователь удален'}, **kwargs)
 
 
 class BadDeleteResponse(ApiResponse):
@@ -105,4 +105,4 @@ class BadDeleteResponse(ApiResponse):
             status_code: status = status.HTTP_400_BAD_REQUEST,
             **kwargs
     ):
-        super().__init__(data, status_code, **kwargs)
+        super().__init__(data={"message": 'Пользователя не сущет'}, **kwargs)
